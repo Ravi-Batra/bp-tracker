@@ -1,0 +1,857 @@
+# Build a Mobile-First Blood Pressure Logging Web App for Hostinger
+
+Build a simple, secure, modern, minimal blood pressure logging web application that will be hosted on my Hostinger hosting.
+
+## 1. Purpose
+
+The app is for one person to record their blood pressure twice a day:
+
+* Morning
+* Evening
+
+Authorized people can view the readings.
+
+The first version must use a **JSON file for data storage**, but the application architecture must keep the storage/data-access code separated from the UI/business logic so that we can migrate to **MySQL later** without rebuilding the entire application.
+
+Use simple, robust technologies suitable for Hostinger shared hosting.
+
+Preferred stack:
+
+* PHP
+* HTML
+* CSS
+* Vanilla JavaScript only where useful
+* JSON for Version 1 data storage
+* No framework unless absolutely necessary
+
+Do not introduce unnecessary complexity.
+
+---
+
+# 2. Access and security
+
+There must be **two separate fixed passwords**:
+
+### Recorder password
+
+Allows:
+
+* Add BP readings
+* Edit existing BP readings
+* View the BP table
+
+### Viewer password
+
+Allows:
+
+* View the BP table only
+
+Viewer users must have **no ability to add, edit, or delete readings**.
+
+Do not rely on simply hiding buttons in the browser for security.
+
+The server must enforce permissions.
+
+For example:
+
+* A viewer must not be able to edit a reading by manually calling an API endpoint.
+* All add/edit operations must verify that the authenticated session has recorder privileges.
+
+## Password storage
+
+Do NOT place passwords in:
+
+* HTML
+* JavaScript
+* publicly accessible JSON
+* client-side code
+
+Store passwords server-side in a protected PHP configuration file outside the public web root where practical.
+
+If the Hostinger environment requires the configuration file to remain within the project directory, protect it appropriately and ensure it cannot be served directly.
+
+Prefer storing passwords as secure password hashes and verifying them with PHP password verification functions rather than storing plain-text passwords.
+
+Do not expose password values anywhere in the UI or source sent to the browser.
+
+Use secure PHP sessions for authentication.
+
+Prevent session fixation by regenerating the session ID after successful login.
+
+Provide a logout function.
+
+---
+
+# 3. Login
+
+Create a simple mobile-friendly login screen.
+
+The user should be able to choose:
+
+* **Recorder**
+* **Viewer**
+
+Then enter the corresponding password.
+
+The same physical page/application may be used, but the selected access mode determines which password is checked.
+
+The UI must clearly indicate the active mode after login:
+
+* `RECORDER`
+* `VIEWER`
+
+Do not allow a Viewer session to become a Recorder session without successfully authenticating with the Recorder password.
+
+If authentication fails, show a clear but generic error message without revealing whether the password or mode was wrong.
+
+---
+
+# 4. Main application layout
+
+Use a **single-page style interface after login** rather than unnecessarily splitting the functionality into multiple pages.
+
+The overall order should be:
+
+1. Header
+2. Current access mode
+3. BP recording controls for Recorder only
+4. BP table
+5. Logout
+
+For a Viewer:
+
+* Do not display editable recording controls.
+* Display the table only.
+* Viewer must still be clearly identified as `VIEWER`.
+
+For a Recorder:
+
+* Display recording controls.
+* Display the same table.
+* Allow editing existing readings.
+
+---
+
+# 5. Recorder interface
+
+The recorder interface must be:
+
+* Mobile-first
+* Modern
+* Minimal
+* Clean
+* Easy to understand
+* Very easy to operate on a phone
+* Designed for large fingers/touch targets
+
+Do NOT make the BP entry controls small.
+
+The primary controls should be large, prominent buttons/cards.
+
+At the top of the Recorder area provide:
+
+* Date selector/input
+* Large button: **Enter Morning BP**
+* Large button: **Enter Evening BP**
+
+The exact visual design can be improved later, so do not over-design Version 1.
+
+The design should use sensible spacing, readable typography, rounded controls where appropriate, and large touch targets.
+
+Avoid:
+
+* crowded interfaces
+* tiny buttons
+* excessive decorative elements
+* unnecessary animations
+* complicated navigation
+* excessive colors
+* large empty spaces
+
+---
+
+# 6. Morning BP entry
+
+When the recorder clicks **Enter Morning BP**, show an entry form.
+
+The form must contain:
+
+* Date
+* Systolic
+* Diastolic
+* Save Morning BP
+
+Example:
+
+Date: `29-08-2026`
+
+Systolic: `[     ]`
+
+Diastolic: `[     ]`
+
+`Save Morning BP`
+
+The date should support:
+
+* a normal date picker/calendar
+* manual date entry
+
+No time is required.
+
+The reading must be associated with the fixed period `Morning`.
+
+---
+
+# 7. Evening BP entry
+
+When the recorder clicks **Enter Evening BP**, show the equivalent form:
+
+Date
+
+Systolic
+
+Diastolic
+
+`Save Evening BP`
+
+The reading must be associated with the fixed period `Evening`.
+
+No time is required.
+
+---
+
+# 8. One Morning + one Evening reading per date
+
+For every date there can be:
+
+* maximum one Morning reading
+* maximum one Evening reading
+
+If the recorder attempts to enter another Morning reading for a date that already has one:
+
+* Do not create a second Morning record.
+* Clearly tell the recorder that a Morning reading already exists.
+* Direct them to edit the existing reading instead.
+
+The same rule applies to Evening.
+
+This must be enforced server-side, not only through JavaScript/UI.
+
+---
+
+# 9. Editing
+
+The recorder must be able to edit an incorrect reading.
+
+Example:
+
+29-08-2026 | Morning 128/78 | Evening 132/80
+
+If Morning was entered incorrectly, the recorder can edit it and save the corrected value.
+
+Editing must:
+
+* require recorder authentication
+* validate the new values
+* preserve the correct date and period
+* update the existing record rather than create a duplicate
+
+There must be **NO Delete function**.
+
+Do not provide a delete button or delete API.
+
+---
+
+# 10. BP validation
+
+The recorder's input must have basic validation.
+
+Require:
+
+* Systolic must be numeric
+* Diastolic must be numeric
+* Neither can be blank
+* Reject non-numeric input
+* Reject clearly impossible values such as `0/0`
+
+Use sensible basic BP limits to prevent accidental nonsense data, but do not overcomplicate validation with medical interpretation.
+
+The app is a recording tool, not a medical diagnosis system.
+
+Validation must occur both:
+
+* client-side where useful for immediate feedback
+* server-side as the authoritative validation
+
+---
+
+# 11. Date handling
+
+The recorder can enter/select dates manually.
+
+Store dates consistently in one internal format, preferably:
+
+`YYYY-MM-DD`
+
+Display dates in a user-friendly format such as:
+
+`29-08-2026`
+
+Do not store times.
+
+Do not automatically add a timestamp to the displayed reading.
+
+The Morning/Evening label is the time-of-day classification.
+
+---
+
+# 12. BP table
+
+Both Recorder and Viewer must see the same table.
+
+The table columns must be:
+
+| Date | Morning BP | Evening BP |
+
+Example:
+
+| Date       | Morning BP | Evening BP |
+| ---------- | ---------- | ---------- |
+| 29-08-2026 | 128 / 78   | 132 / 80   |
+| 28-08-2026 | 125 / 76   | 130 / 79   |
+| 27-08-2026 | 130 / 80   | —          |
+| 26-08-2026 | 126 / 75   | 129 / 78   |
+
+Requirements:
+
+* Newest date first
+* One row per date
+* Morning and Evening in the same row
+* Missing reading remains blank/`—`
+* Do not create separate rows for Morning and Evening
+
+For Recorder mode, provide a clear edit mechanism for existing readings.
+
+For Viewer mode, the values must be read-only.
+
+---
+
+# 13. Rolling 30-day display
+
+The application should show a **rolling 30-day period**.
+
+This means the current date plus the previous 29 dates.
+
+Newest date first.
+
+However, at the very beginning, do NOT fill the table with 30 unnecessary blank dates.
+
+The display should start from the **first recorded date**.
+
+After recording has started:
+
+* show the rolling 30-day window
+* show blank cells where a Morning or Evening reading is missing
+* do not show dates older than the rolling 30-day window
+
+Implement this carefully so the behavior is intuitive.
+
+Example:
+
+If today is 29-08-2026 and records started on 25-08-2026, do not show 30 blank rows starting from 31-07-2026. Start from the first actual recorded date, while keeping the rolling 30-day limit.
+
+---
+
+# 14. No chart
+
+Do NOT create a BP chart in Version 1.
+
+The application should use the simple table only.
+
+Do not convert BP into a single number.
+
+The stored and displayed reading must retain the actual:
+
+`Systolic / Diastolic`
+
+format.
+
+---
+
+# 15. Recorder view
+
+Recorder mode should contain:
+
+* `RECORDER` mode indicator
+* Large **Enter Morning BP** control
+* Large **Enter Evening BP** control
+* BP table
+* Edit functionality
+* Logout
+
+The recorder should not have a separate screen only for entering data and another screen only for viewing the table unless technically necessary.
+
+The goal is one convenient mobile-friendly working page.
+
+---
+
+# 16. Viewer view
+
+Viewer mode should contain:
+
+* `VIEWER` mode indicator
+* BP table
+* Logout
+
+Viewer must NOT have:
+
+* Enter Morning BP button
+* Enter Evening BP button
+* Edit controls
+* Delete controls
+
+Do not depend only on CSS/JavaScript hiding.
+
+The server must reject unauthorized operations.
+
+---
+
+# 17. Empty state
+
+When there are no records yet, show a clean message such as:
+
+`No BP readings recorded yet.`
+
+Do not display a large table filled with 30 empty dates.
+
+Once the first reading exists, the table begins from that date.
+
+---
+
+# 18. Data structure
+
+Use a JSON data file for Version 1.
+
+Keep the data format simple and migration-friendly.
+
+A suitable structure could be:
+
+```json
+{
+  "records": [
+    {
+      "date": "2026-08-29",
+      "morning": {
+        "systolic": 128,
+        "diastolic": 78
+      },
+      "evening": {
+        "systolic": 132,
+        "diastolic": 80
+      }
+    }
+  ]
+}
+```
+
+Adjust the exact implementation if you have a better structure, but preserve these logical rules:
+
+* one record per date
+* one Morning reading
+* one Evening reading
+* systolic and diastolic remain separate values
+
+Do not store the displayed `"128/78"` as the only data value.
+
+---
+
+# 19. Storage architecture
+
+Separate the code into logical layers.
+
+For example:
+
+* configuration
+* authentication
+* data/storage functions
+* validation
+* application/API handling
+* UI
+
+The UI should not directly manipulate the JSON file.
+
+Create reusable PHP functions for operations such as:
+
+* get all records
+* get record by date
+* add Morning reading
+* add Evening reading
+* update Morning reading
+* update Evening reading
+* validate reading
+* enforce one Morning/Evening record per date
+
+This separation is important because Version 2 may migrate from JSON to MySQL.
+
+The migration should be possible without redesigning the UI.
+
+---
+
+# 20. JSON file safety
+
+Because multiple actions may write to the JSON file, write the data safely.
+
+Use proper file locking when writing.
+
+Avoid corrupting the JSON file if two requests happen close together.
+
+Handle missing or malformed JSON gracefully.
+
+Do not expose the raw JSON file directly to visitors.
+
+Store it outside the public web root where possible.
+
+If that is not possible on Hostinger, protect the directory/file appropriately.
+
+Do not allow a visitor to open the JSON file directly in the browser.
+
+---
+
+# 21. Configuration
+
+Create a clear protected configuration file for settings such as:
+
+* Recorder password hash
+* Viewer password hash
+* data file location
+* application settings
+
+Do not hard-code passwords into HTML or JavaScript.
+
+Make it easy for me to change the passwords later.
+
+Clearly document where I should change the password hashes.
+
+---
+
+# 22. Hostinger compatibility
+
+The application must be suitable for normal Hostinger shared hosting.
+
+Do not depend on:
+
+* Node.js server
+* Docker
+* Python backend
+* background workers
+* Redis
+* complex build systems
+
+It should be deployable using normal Hostinger File Manager / FTP/Git deployment.
+
+Use PHP features commonly available on Hostinger.
+
+Avoid requiring command-line installation unless absolutely necessary.
+
+---
+
+# 23. Subdomain
+
+I will host this application on a **non-obvious/unpredictable subdomain** so the URL is not easy to guess.
+
+Do not assume a specific subdomain name.
+
+Document that I should create a long, random-looking subdomain, rather than something obvious such as:
+
+`bp.example.com`
+
+For example, the final subdomain could follow a pattern similar to:
+
+`x7k29p.example.com`
+
+The subdomain is only an additional layer of obscurity.
+
+The actual security must still come from authentication and server-side authorization.
+
+Do not present subdomain obscurity as a substitute for password security.
+
+---
+
+# 24. Mobile-first requirements
+
+This app will be used primarily on a phone.
+
+The mobile experience is more important than desktop.
+
+Requirements:
+
+* responsive layout
+* large touch targets
+* readable text
+* comfortable spacing
+* no horizontal scrolling for normal phone widths
+* simple navigation
+* forms easy to use with one hand
+* numeric keyboard should be preferred for systolic/diastolic fields where supported
+* buttons should not be tiny
+
+The recording buttons should be large enough that the user can easily tap them.
+
+Do not make the interface visually crowded.
+
+The final UI can be redesigned later, so prioritize usability and clean structure over elaborate styling.
+
+---
+
+# 25. Desktop support
+
+The application should also work properly on desktop browsers.
+
+However, do not design the desktop layout at the expense of mobile usability.
+
+Use a sensible maximum content width so the table does not become excessively wide on large screens.
+
+---
+
+# 26. Error handling
+
+Provide clear user-facing messages for cases such as:
+
+* wrong password
+* missing BP value
+* invalid BP value
+* duplicate Morning entry
+* duplicate Evening entry
+* date missing/invalid
+* record not found during edit
+* storage/read/write failure
+
+Do not display raw PHP errors, file paths, stack traces, passwords, or sensitive implementation details to normal users.
+
+Log useful server-side errors when appropriate.
+
+---
+
+# 27. CSRF and request security
+
+All state-changing POST requests should have CSRF protection.
+
+Do not perform add/edit operations using unsecured GET requests.
+
+Validate all incoming data server-side.
+
+Do not trust hidden form fields to determine authorization.
+
+Use the authenticated session to determine whether the user is Recorder or Viewer.
+
+---
+
+# 28. Output escaping
+
+Escape data correctly before rendering it into HTML.
+
+Do not assume stored values are safe simply because they originated from the app.
+
+---
+
+# 29. No unnecessary features
+
+Do NOT add these unless explicitly requested later:
+
+* charts
+* PDF export
+* CSV export
+* email notifications
+* SMS
+* WhatsApp integration
+* user registration
+* multiple BP profiles
+* pulse
+* weight
+* notes
+* medication tracking
+* medical alerts
+* diagnosis
+* AI analysis
+* trend analysis
+* cloud storage
+* third-party login
+
+Keep Version 1 focused on the agreed requirements.
+
+---
+
+# 30. Suggested project structure
+
+Use a clean structure similar to:
+
+```text
+/project-root
+    index.php
+    login.php
+    logout.php
+    api.php
+
+    /config
+        config.php
+
+    /lib
+        auth.php
+        bp.php
+        storage.php
+        validation.php
+
+    /data
+        .htaccess
+        bp.json
+
+    /assets
+        style.css
+        app.js
+```
+
+You may improve this structure if there is a strong technical reason, but maintain the same separation of responsibilities.
+
+Protect sensitive files from direct browser access.
+
+Do not expose configuration files.
+
+---
+
+# 31. Build requirements
+
+Build the complete working application, not just a mockup.
+
+The application must:
+
+1. Start at the login screen.
+2. Allow Recorder login.
+3. Allow Viewer login.
+4. Maintain the correct session role.
+5. Show the appropriate interface.
+6. Allow the Recorder to enter Morning BP.
+7. Allow the Recorder to enter Evening BP.
+8. Prevent duplicate readings for the same date and period.
+9. Allow the Recorder to edit incorrect readings.
+10. Prevent deletion.
+11. Prevent Viewer editing/additions.
+12. Validate input.
+13. Save records safely to JSON.
+14. Display the rolling 30-day table.
+15. Start display from the first actual recorded date rather than showing unnecessary blank dates before recording begins.
+16. Show newest dates first.
+17. Work well on mobile.
+18. Provide logout.
+19. Keep passwords secure.
+20. Be deployable on Hostinger shared hosting.
+
+---
+
+# 32. Testing
+
+Before considering the build complete, test at minimum:
+
+### Authentication
+
+* correct Recorder password
+* wrong Recorder password
+* correct Viewer password
+* wrong Viewer password
+* logout
+* direct access to protected pages without login
+
+### Authorization
+
+* Viewer cannot create a reading
+* Viewer cannot edit a reading
+* Viewer cannot delete anything
+* Recorder can create readings
+* Recorder can edit readings
+
+### BP rules
+
+* valid Morning entry
+* valid Evening entry
+* missing systolic
+* missing diastolic
+* non-numeric input
+* clearly invalid values
+* duplicate Morning entry
+* duplicate Evening entry
+* edit existing Morning
+* edit existing Evening
+
+### Date rules
+
+* manually entered date
+* date picker
+* old date
+* current date
+* one row per date
+* correct 30-day rolling behavior
+
+### Storage
+
+* save JSON
+* reload JSON
+* malformed/missing JSON handling
+* concurrent write protection
+* direct access to data/config files must be blocked
+
+### Responsive design
+
+Test approximately at:
+
+* 360 px mobile width
+* 390 px mobile width
+* 768 px tablet width
+* desktop width
+
+Pay particular attention to the size of the Morning/Evening entry controls.
+
+---
+
+# 33. What to deliver
+
+Create all required files for the working application.
+
+Also create a concise `README.md` explaining:
+
+* what the app does
+* project structure
+* how to configure Recorder password
+* how to configure Viewer password
+* where BP data is stored
+* how to deploy to Hostinger
+* which directory/file needs protection
+* how to create the non-obvious subdomain
+* how the application could later be migrated from JSON to MySQL
+
+Do not put actual passwords in the README.
+
+---
+
+# 34. Important development instruction
+
+Before modifying or creating files:
+
+1. Inspect the current project directory.
+2. Do not overwrite unrelated files.
+3. Reuse existing project conventions if they are already present.
+4. If this is a new empty project, create the required structure cleanly.
+5. Keep implementation simple and maintainable.
+6. Avoid unnecessary dependencies.
+
+After implementation:
+
+* review the complete code
+* check for obvious security issues
+* check permission enforcement
+* check JSON write safety
+* check mobile layout
+* check all agreed business rules
+* fix any issues you find
+
+Do not stop at a partial scaffold.
+
+The finished result should be a **working Version 1 application suitable for deployment to Hostinger**.
