@@ -46,6 +46,8 @@ For the Password Protection update, preserve the live `config/config.php` and ma
 
 Use an unpredictable subdomain, for example `x7k29p.yourdomain.com`, but treat it only as an extra privacy layer. The passwords and server-side role checks are the real protection.
 
+Staging deployments are delivered automatically from the GitHub `staging` branch.
+
 ## Later MySQL migration
 
 The page and validation do not directly edit JSON. The storage work is isolated in `lib/storage.php` and `lib/bp.php`, and access decisions are centralized in `lib/auth.php`. A later multi-user version can move storage to MySQL, add user accounts, and associate every reading with a `user_id`. This release does not add accounts or separate user data.
