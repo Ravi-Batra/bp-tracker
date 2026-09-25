@@ -3,7 +3,9 @@
   const parking = document.querySelector('#entry-form-parking');
   if (!form || !parking) return;
   const field = name => form.elements.namedItem(name);
+  const voiceControls = form.querySelector('.voice-controls');
   const voiceButton = form.querySelector('.voice-entry');
+  const voiceLanguage = form.querySelector('.voice-language');
   const voiceStatus = form.querySelector('.voice-status');
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
@@ -43,19 +45,22 @@
     form.hidden = false;
     field('systolic').focus();
   };
-  if (Recognition && voiceButton && voiceStatus && window.BPVoiceEntry) {
-    voiceButton.hidden = false;
+  if (Recognition && voiceControls && voiceButton && voiceLanguage && voiceStatus && window.BPVoiceEntry) {
+    voiceControls.hidden = false;
+    if ((navigator.language || '').toLowerCase().startsWith('hi')) voiceLanguage.value = 'hi-IN';
     voiceButton.addEventListener('click', () => {
       stopRecognition();
       recognition = new Recognition();
       const currentRecognition = recognition;
-      recognition.lang = navigator.language || document.documentElement.lang || 'en-US';
+      recognition.lang = voiceLanguage.value;
       recognition.continuous = false;
       recognition.interimResults = false;
       recognition.maxAlternatives = 3;
       recognition.onstart = () => {
         voiceButton.classList.add('is-listening');
-        setVoiceStatus('Listening… Say “132 over 78 pulse 67”.');
+        setVoiceStatus(voiceLanguage.value === 'hi-IN'
+          ? 'सुन रहा है… कहें “132 बाय 78, पल्स 67”।'
+          : 'Listening… Say “132 over 78 pulse 67”.');
       };
       recognition.onresult = event => {
         const alternatives = Array.from(event.results[0] || []);
