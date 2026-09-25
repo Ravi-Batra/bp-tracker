@@ -11,6 +11,7 @@
 
 - Treat `README.md` as the authoritative deployment and data-safety guide.
 - Read `PROJECT.md` for the application structure and current product constraints.
+- Read `STATUS.md` for the current session handoff, confirmed behavior, and unresolved work before making changes.
 - Preserve the live private configuration, blood-pressure data, and settings files. Never include them in a code deployment.
 - Run checks relevant to the changed files and do not report completion while relevant failures remain unexplained.
 
