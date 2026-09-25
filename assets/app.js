@@ -9,6 +9,7 @@
   const voiceStatus = form.querySelector('.voice-status');
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition;
   let recognition = null;
+  let successTimer = null;
   let activeHost = null;
   const setVoiceStatus = message => { if (voiceStatus) voiceStatus.textContent = message; };
   const stopRecognition = () => {
@@ -16,12 +17,16 @@
     recognition.abort();
     recognition = null;
     voiceButton?.classList.remove('is-listening');
+    form.classList.remove('voice-listening');
   };
   const closeForm = () => {
     stopRecognition();
     setVoiceStatus('');
+    clearTimeout(successTimer);
+    successTimer = null;
+    form.classList.remove('voice-listening', 'voice-success');
     form.hidden = true;
-    if (activeHost) activeHost.classList.remove('is-editing');
+    if (activeHost) activeHost.classList.remove('is-editing', 'entry-add', 'entry-edit');
     parking.append(form);
     activeHost = null;
   };
@@ -40,7 +45,7 @@
     field('original_slot').value = edit ? data.slot : '';
     form.querySelector('#save-button').textContent = 'Save';
     activeHost = host;
-    activeHost.classList.add('is-editing');
+    activeHost.classList.add('is-editing', edit ? 'entry-edit' : 'entry-add');
     activeHost.append(form);
     form.hidden = false;
     field('systolic').focus();
@@ -58,6 +63,8 @@
       recognition.maxAlternatives = 3;
       recognition.onstart = () => {
         voiceButton.classList.add('is-listening');
+        form.classList.remove('voice-success');
+        form.classList.add('voice-listening');
         setVoiceStatus(voiceLanguage.value === 'hi-IN'
           ? 'सुन रहा है… कहें “132 बाय 78, पल्स 67”।'
           : 'Listening… Say “132 over 78 pulse 67”.');
@@ -73,6 +80,9 @@
         field('diastolic').value = reading.diastolic;
         field('pulse').value = reading.pulse;
         setVoiceStatus('Values entered. Review them, then tap Save.');
+        clearTimeout(successTimer);
+        form.classList.add('voice-success');
+        successTimer = setTimeout(() => form.classList.remove('voice-success'), 1800);
         field('systolic').focus();
       };
       recognition.onerror = event => {
@@ -87,6 +97,7 @@
       recognition.onend = () => {
         if (recognition !== currentRecognition) return;
         voiceButton.classList.remove('is-listening');
+        form.classList.remove('voice-listening');
         recognition = null;
       };
       try {
